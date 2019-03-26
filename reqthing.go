@@ -6,17 +6,20 @@ import "net/http"
 var Info log.Logger
 var Debug log.Logger
 
+// Assert that Reqthing is a roundtripper
+var _ http.RoundTripper = new(Reqthing)
+
 type Reqthing struct {
-	tr         *http.Transport
-	name       string
-	cacheDir   string
-	hashSecret []byte
+	tr       http.RoundTripper
+	name     string
+	cacheDir string
+	hSeed    []byte
 }
 
 type Options struct {
-	CacheDir   string
-	Name       string
-	HashSecret string
+	Name     string
+	CacheDir string
+	HashSeed string
 }
 
 // get cache path for a url
@@ -28,11 +31,16 @@ func (r *Reqthing) cacheId(url string) (string, error) {
 }
 
 // create a new Reqthing
-func New(options Options) *Reqthing {
-	return &Reqthing{}
+func New(o Options) *Reqthing {
+	return &Reqthing{
+		tr:       http.DefaultTransport,
+		name:     o.Name,
+		cacheDir: o.CacheDir,
+		hSeed:    []byte(o.HashSeed),
+	}
 }
 
 // perform an http request
-func (r *Reqthing) Roundtrip(req *http.Request) (*http.Response, error) {
-	return nil, nil
+func (r *Reqthing) RoundTrip(req *http.Request) (*http.Response, error) {
+	return r.tr.RoundTrip(req)
 }
