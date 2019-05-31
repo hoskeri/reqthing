@@ -1,10 +1,9 @@
 package reqthing
 
-import "log"
+import stdlog "log"
 import "net/http"
 
-var Info log.Logger
-var Debug log.Logger
+var Log stdlog.Logger
 
 // Assert that Reqthing is a roundtripper
 var _ http.RoundTripper = new(Reqthing)
@@ -17,9 +16,8 @@ type Reqthing struct {
 }
 
 type Options struct {
-	Name     string
-	CacheDir string
-	HashSeed string
+	CacheDir string // cache storage location
+	HashSeed []byte // hash seed for cache keys
 }
 
 // get cache path for a url
@@ -30,17 +28,27 @@ func (r *Reqthing) cacheId(url string) (string, error) {
 	return "", nil
 }
 
+type key struct {
+	part1 uint64
+	part2 uint64
+}
+
 // create a new Reqthing
 func New(o Options) *Reqthing {
 	return &Reqthing{
 		tr:       http.DefaultTransport,
-		name:     o.Name,
 		cacheDir: o.CacheDir,
 		hSeed:    []byte(o.HashSeed),
 	}
 }
 
+// cache key for request.
+func getKey(req *http.Request) key {
+	return key{}
+}
+
 // perform an http request
 func (r *Reqthing) RoundTrip(req *http.Request) (*http.Response, error) {
+	Log.Printf("key: %v", getKey(req))
 	return r.tr.RoundTrip(req)
 }
